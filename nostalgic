@@ -30,7 +30,7 @@
 # Author: Eric Davis <http://insanum.com>
 #
 
-REPOS=$HOME/dots
+REPOS=$HOME/git/system-config
 DEST=$HOME
 DRYRUN=0
 SKIP_CONFLICTS=0
