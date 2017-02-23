@@ -217,6 +217,76 @@ function Symlink()
     fi
 }
 
+####################
+# SymlinkNoPrefix and SymlinkNP functions
+
+function SymlinkNoPrefix()
+{
+    local repo=$1
+    RepoExists "$repo" 'symlinknp'
+
+    cd "$repo"
+
+    log $CLR_MAGENTA "--> symlinknping repo [$repo]"
+
+    # uncomment this if '.' prefixed files are in the repo
+    #shopt -s dotglob
+
+    PREFIX=""
+
+    for file in *; do
+        SLINK="$DEST/$PREFIX$file"
+
+        if [[ -e "$SLINK" && `readlink "$SLINK"` == "$repo/$file" ]]; then
+            log $CLR_CYAN "--> [$file] already symlinnpked"
+            continue
+        fi
+
+        if [[ -e "$SLINK" ]]; then
+            if [[ $SKIP_CONFLICTS -eq 1 ]]; then
+                log $CLR_YELLOW "(!) conflict symlinknp exists for [$file]"
+                continue
+            fi
+
+            if [[ $FIX_CONFLICTS -eq 0 ]]; then
+                log $CLR_YELLOW "conflict for [$file] -> [`readlink "$SLINK"`]"
+                read -p "fix $file? [y/(n)]" fix
+                [[ $fix =~ [Nn] ]] && continue
+            else
+                log $CLR_YELLOW "(!) fixing conflict for [$file]"
+            fi
+
+            [[ $DRYRUN -eq 0 ]] && rm -f "$SLINK"
+        fi
+
+        [[ $DRYRUN -eq 0 ]] && ln -s "$repo/$file" "$SLINK"
+        log $CLR_GREEN "--> symlinknped [$file]"
+    done
+
+    # uncomment this if '.' prefixed files are in the repo
+    #shopt -u dotglob
+
+    cd "$OLDPWD"
+}
+
+function SymlinkNP()
+{
+    [[ -z "$1" ]] && err "symlinknp requires an argument"
+
+    if [[ "$1" == ALL ]]; then
+        for r in `ls "$REPOS"`; do
+            repo="$REPOS/$r"
+            [[ ! -d "$repo" ]] && continue
+            SymlinkNoPrefix "$repo"
+        done
+    else
+        local repo="$REPOS/$1"
+        SymlinkNoPrefix "$repo"
+    fi
+}
+
+#############################3
+
 function Track()
 {
     [[ -z "$1" || -z "$2" ]] && err "track requires two arguments"
@@ -314,6 +384,7 @@ case $1 in
     pull)    shift; Pull $@    ;;
     status)  shift; Status $@  ;;
     symlink) shift; Symlink $@ ;;
+    symlinknp) shift; SymlinkNP $@ ;;
     track)   shift; Track $@   ;;
     *)       Usage             ;;
 esac
