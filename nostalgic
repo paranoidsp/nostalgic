@@ -76,7 +76,7 @@ function Clone()
 
     log $CLR_GREEN "--> cloning [$repo]"
     if [[ $DRYRUN -eq 0 ]]; then
-        git clone "$1" "$repo"
+        git clone --recursive "$1" "$repo"
     fi
 }
 
